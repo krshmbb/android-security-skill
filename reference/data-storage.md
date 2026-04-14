@@ -1,6 +1,6 @@
 # Data Storage Security
 
-Guidelines for secure storage of sensitive data in Android applications.
+Guidelines for secure storage of sensitive data and logging in Android applications.
 
 ---
 
@@ -18,38 +18,13 @@ Guidelines for secure storage of sensitive data in Android applications.
 **When to Use**
 - All private user data
 - Sensitive information
-- Authentication tokens
-- Encryption keys (use Keystore for long-term keys)
+- Authentication tokens (preferably encrypted, with encryption key anchored in the KeyStore)
 - Personal identifiable information (PII)
 
-### Implementation
-
-**Write to Internal Storage**
-```kotlin
-val FILE_NAME = "sensitive_info.txt"
-val fileContents = "This is some top-secret information!"
-
-// Write file
-File(filesDir, FILE_NAME).bufferedWriter().use { writer ->
-    writer.write(fileContents)
-}
-```
-
-**Read from Internal Storage**
-```kotlin
-val contents = File(filesDir, FILE_NAME).bufferedReader().useLines { lines ->
-    lines.fold("") { working, line -> "$working\n$line" }
-}
-```
-
-**File Paths**
-```kotlin
-// Get files directory
-val filesDir = context.filesDir
-
-// Get cache directory
-val cacheDir = context.cacheDir
-```
+**Never Use Deprecated Modes**
+- `MODE_WORLD_WRITEABLE` - Deprecated, insecure
+- `MODE_WORLD_READABLE` - Deprecated, insecure
+- If you want to share data with other app processes, use content provider instead.
 
 ---
 
@@ -59,10 +34,10 @@ val cacheDir = context.cacheDir
 
 **Important Warnings**
 - No security enforcement
-- Any app with `WRITE_EXTERNAL_STORAGE` permission can access (Android 10 or lower)
-- Store only non-sensitive data
+- Any app with `WRITE_EXTERNAL_STORAGE` permission can access (Android 10 or lower).
+- Store only non-sensitive data (if you have to, encrypt sensitive data with encryption key anchored in keystore)
 - Perform input validation on all data read from external storage
-- Cryptographically verify data before use
+- Don't store executables or class files (If you do, ensure files are signed and cryptographically verified)
 
 ### When to Use
 
@@ -96,6 +71,19 @@ fun validateFile(file: File, expectedHash: String): Boolean {
 // Never trust external data without validation
 ```
 
+**Content Validation**
+```kotlin
+// Validate file content
+fun validateFileContent(file: File): Boolean {
+    // Check file size
+    if (file.length() > MAX_FILE_SIZE) return false
+
+    // Verify file signature/magic bytes
+    val header = file.inputStream().use { it.readNBytes(4) }
+    return header.contentEquals(EXPECTED_HEADER)
+}
+```
+
 **Critical Rules**
 - Don't store executables or class files on external storage
 - Cryptographically verify files before dynamic loading
@@ -107,6 +95,7 @@ fun validateFile(file: File, expectedHash: String): Boolean {
 ## Cache Files
 
 ### Cache Directory Selection
+Provides faster access to non-sensitive app data
 
 **Small Cache (≤ 1 MB)**
 ```kotlin
@@ -118,8 +107,9 @@ val cacheFile = File(cacheDir, "temp_data.txt")
 **Large Cache (> 1 MB)**
 ```kotlin
 // Use external cache
-val externalCacheDir = context.externalCacheDir
-val largeCacheFile = File(externalCacheDir, "large_temp_data.bin")
+val largeCacheFile = context.externalCacheDir?.let { externalCacheDir ->
+    File(externalCacheDir, "large_temp_data.bin")
+}
 ```
 
 ### Security Considerations
@@ -166,10 +156,6 @@ val value = sharedPref.getString("key", "default")
 
 ### Security Rules
 
-**Never Use Deprecated Modes**
-- `MODE_WORLD_WRITEABLE` - Deprecated, insecure
-- `MODE_WORLD_READABLE` - Deprecated, insecure
-
 **Never Use for Cross-App Sharing**
 - Don't use SharedPreferences to share data between apps
 - Use ContentProviders for cross-app data sharing
@@ -182,170 +168,216 @@ val value = sharedPref.getString("key", "default")
 
 **What NOT to Store**
 - Passwords or credentials
-- Authentication tokens (use Keystore)
+- Authentication tokens (use private app storage)
 - Sensitive user data
 - Encryption keys
 
 ---
 
-## Input Validation
+## Content Providers
 
-### Validate All External Data
+### Overview
 
-**Sources Requiring Validation**
-- Files from external storage
-- Network data
-- IPC data
-- User input
-- Intent extras
-- Broadcast data
+Content providers offer a structured storage mechanism that can be limited to your own application or exported to allow access by other applications.
 
-### Validation Strategies
+### Export Configuration
 
-**Type Validation**
-```kotlin
-// Validate data types
-fun validateInput(data: Any): Boolean {
-    return when (data) {
-        is String -> data.length <= MAX_LENGTH
-        is Int -> data in MIN_VALUE..MAX_VALUE
-        else -> false
-    }
-}
+**Private Content Provider (Default)**
+```xml
+<!-- AndroidManifest.xml -->
+<!-- For app-only access -->
+<provider
+    android:name=".MyContentProvider"
+    android:authorities="com.example.app.provider"
+    android:exported="false" />
 ```
 
-**Content Validation**
-```kotlin
-// Validate file content
-fun validateFileContent(file: File): Boolean {
-    // Check file size
-    if (file.length() > MAX_FILE_SIZE) return false
-
-    // Verify file signature/magic bytes
-    val header = file.inputStream().use { it.readNBytes(4) }
-    return header.contentEquals(EXPECTED_HEADER)
-}
+**Public Content Provider**
+```xml
+<!-- For cross-app access -->
+<provider
+    android:name=".MyContentProvider"
+    android:authorities="com.example.app.provider"
+    android:exported="true"
+    android:readPermission="com.example.app.READ_PROVIDER"
+    android:writePermission="com.example.app.WRITE_PROVIDER" />
 ```
 
-**Hash Verification**
+### Permission Configuration
+
+**Single Permission**
+```xml
+<!-- Define custom "normal" permission -->
+<!-- For low-risk shared data only. Use stronger controls for sensitive data. -->
+<permission
+    android:name="com.example.app.ACCESS_PROVIDER"
+    android:protectionLevel="normal" />
+
+<!-- Apply to provider -->
+<provider
+    android:name=".MyContentProvider"
+    android:authorities="com.example.app.provider"
+    android:exported="true"
+    android:permission="com.example.app.ACCESS_PROVIDER" />
+```
+
+**Separate Read/Write Permissions**
+```xml
+<!-- Define "normal" permissions -->
+<!-- For low-risk shared data only. Use stronger controls for sensitive data. -->
+<permission
+    android:name="com.example.app.READ_PROVIDER"
+    android:protectionLevel="normal" />
+<permission
+    android:name="com.example.app.WRITE_PROVIDER"
+    android:protectionLevel="normal" />
+
+<!-- Apply to provider -->
+<provider
+    android:name=".MyContentProvider"
+    android:authorities="com.example.app.provider"
+    android:exported="true"
+    android:readPermission="com.example.app.READ_PROVIDER"
+    android:writePermission="com.example.app.WRITE_PROVIDER" />
+```
+
+**Normal Permission Limitations**
+- `normal` permissions are granted automatically and are only appropriate for low-risk data
+- Use `signature` permissions for data shared only between apps signed with the same key
+- Add app-level authorization checks before returning sensitive rows or fields
+- Treat exported providers as public APIs, even when protected by manifest permissions
+
+**Signature Protection (Same-Developer Apps)**
+```xml
+<!-- For sharing between your own apps only -->
+<permission
+    android:name="com.example.app.ACCESS_PROVIDER"
+    android:protectionLevel="signature" />
+
+<provider
+    android:name=".MyContentProvider"
+    android:authorities="com.example.app.provider"
+    android:exported="true"
+    android:permission="com.example.app.ACCESS_PROVIDER" />
+```
+
+**Benefits of Signature Protection**
+- No user confirmation required
+- Better user experience
+- Controlled access when apps signed with same key
+- Recommended for same-developer app sharing
+
+### Granular URI Permissions
+
+**Temporary Access Grants**
+```xml
+<!-- Enable URI permissions -->
+<provider
+    android:name=".MyContentProvider"
+    android:authorities="com.example.app.provider"
+    android:exported="true"
+    android:grantUriPermissions="true">
+
+    <!-- Limit scope of grants -->
+    <grant-uri-permission
+        android:pathPattern="/shared/.*" />
+</provider>
+```
+
 ```kotlin
-// Cryptographic verification
-fun verifyIntegrity(file: File, expectedHash: String): Boolean {
-    val actualHash = MessageDigest.getInstance("SHA-256").let { digest ->
-        file.inputStream().use { input ->
-            val buffer = ByteArray(8192)
-            var bytesRead = input.read(buffer)
-            while (bytesRead != -1) {
-                digest.update(buffer, 0, bytesRead)
-                bytesRead = input.read(buffer)
-            }
-            digest.digest().joinToString("") { "%02x".format(it) }
-        }
-    }
-    return actualHash == expectedHash
+// Grant temporary read/write access
+val intent = Intent(Intent.ACTION_VIEW).apply {
+    data = contentUri
+    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
 }
+startActivity(intent)
 ```
 
 ### SQL Injection Prevention
 
-**Use Parameterized Queries**
+**Always Use Parameterized Queries**
 ```kotlin
-// Good - Parameterized query
-val selection = "user_id = ?"
-val selectionArgs = arrayOf(userId.toString())
-val cursor = db.query(
-    "users",
-    projection,
-    selection,
-    selectionArgs,
-    null, null, null
-)
+// Good - Safe parameterized query
+override fun query(
+    uri: Uri,
+    projection: Array<String>?,
+    selection: String?,
+    selectionArgs: Array<String>?,
+    sortOrder: String?
+): Cursor? {
+    val db = dbHelper.readableDatabase
+
+    // Use selection and selectionArgs - never concatenate
+    return db.query(
+        "table_name",
+        projection,
+        selection,  // Use placeholder: "column = ?"
+        selectionArgs,  // Provide values separately
+        null, null, sortOrder
+    )
+}
 ```
 
-**Never Use String Concatenation**
+**Avoid String Concatenation**
 ```kotlin
 // BAD - SQL Injection vulnerability
-val query = "SELECT * FROM users WHERE user_id = $userId"
-// Never do this!
+val selection = "user_id = $userId"  // NEVER do this!
+
+// GOOD - Use parameterized query
+val selection = "user_id = ?"
+val selectionArgs = arrayOf(userId.toString())
 ```
 
-**Use Safe Query Methods**
-- `query()`
-- `update()`
-- `delete()`
-- `insert()`
+**Important Warning**
+- Parameterized methods alone are not sufficient
+- Building selection argument by concatenating user data is still vulnerable
+- Always use selection placeholders (?) with separate arguments
 
----
+### Write Permission Security Warning
 
-## Native Code Considerations
+**Critical Security Consideration**
 
-### Memory Management Errors to Prevent
+The write permission allows SQL statements that can be exploited to read data:
 
-**Buffer Overflows**
-```c
-// Bad - buffer overflow risk
-char buffer[100];
-strcpy(buffer, user_input);  // Unsafe!
-
-// Good - bounded copy
-char buffer[100];
-strncpy(buffer, user_input, sizeof(buffer) - 1);
-buffer[sizeof(buffer) - 1] = '\0';
-```
-
-**Use-After-Free**
-```c
-// Bad - use after free
-free(ptr);
-*ptr = value;  // Dangerous!
-
-// Good - null after free
-free(ptr);
-ptr = NULL;
-```
-
-**Off-By-One Errors**
-```c
-// Bad - off by one
-for (int i = 0; i <= array_size; i++) {
-    array[i] = value;  // Writes past end!
+**Attack Scenario**
+```kotlin
+// Attacker can probe for specific data
+// Update row only if phone number exists
+val selection = "phone_number = '555-1234'"
+val values = ContentValues().apply {
+    put("note", "probed")
 }
-
-// Good - correct bounds
-for (int i = 0; i < array_size; i++) {
-    array[i] = value;
-}
+// If update count > 0, phone number exists
+val count = contentResolver.update(uri, values, selection, null)
 ```
 
-### Android Security Mitigations
+**Key Points**
+- Write permission enables creative WHERE clauses
+- Attackers can parse results to confirm data presence
+- Predictable content structure makes write ≈ read+write
+- Don't assume write permission is less sensitive than read
 
-**Available Mitigations**
-- ASLR (Address Space Layout Randomization)
-- DEP (Data Execution Prevention)
+### Security Best Practices
 
-**Important Note**
-- These mitigate but don't prevent memory errors
-- Careful pointer handling and buffer management still required
+**Permission Guidelines**
+- Mark as `android:exported="false"` if not sharing with other apps
+- Set `android:exported="true"` only when cross-app access is required
+- Limit permissions to minimum required
+- Easier to add permissions later than remove them
+- Use signature protection for same-developer apps
 
----
+**Access Control**
+- Implement separate read/write permissions when possible
+- Use URI permissions for temporary, scoped access
+- Validate all input to prevent SQL injection
+- Never concatenate user input in queries
 
-## Type-Safe Languages
-
-### Prefer High-Level Languages
-
-**Recommended**
-- Kotlin (preferred)
-- Java
-
-**Use With Caution**
-- JNI/NDK (native code)
-- C/C++ (more error-prone)
-
-**When Native Code is Necessary**
-- Familiarize with Linux security best practices
-- Be extra careful with memory management
-- Test thoroughly for memory errors
-- Consider using safer alternatives when possible
+**Data Validation**
+- Use parameterized query methods (query, update, delete)
+- Validate selection arguments before use
+- Treat all external data as untrusted
+- Remember write permission security implications
 
 ---
 
@@ -384,15 +416,6 @@ try {
 }
 ```
 
-**Delete Files Securely**
-```kotlin
-// Delete file
-val file = File(filesDir, "sensitive.txt")
-if (file.exists()) {
-    file.delete()
-}
-```
-
 ---
 
 ## Logging Security
@@ -409,18 +432,10 @@ if (file.exists()) {
 - Phone numbers
 
 **Safe Logging Practice**
-```kotlin
-// Bad - logs sensitive data
-Log.d(TAG, "User password: $password")
-
-// Good - no sensitive data
-Log.d(TAG, "Authentication attempt")
-
-// Use debug flags
-if (BuildConfig.DEBUG) {
-    Log.d(TAG, "Debug info")
-}
-```
+- Sanitize any logs in production containing sensitive data
+- Redact sensitive data in logs (sanitize using tokenization, data masking, redaction or filtering)
+- Don’t use data masking when partial exposure of sensitive data can still compromise security (e.g. passwords)
+- Log printing should only be performed through a “logs sanitizer” component
 
 **Production Logging**
 ```kotlin
@@ -442,23 +457,8 @@ object SecureLog {
 
 ---
 
-## Storage Security Checklist
+## Official Documentation
 
-Before releasing your app:
-
-- [ ] Sensitive data stored in internal storage only
-- [ ] External storage used only for non-sensitive data
-- [ ] Input validation implemented for all external data
-- [ ] Files from external storage cryptographically verified
-- [ ] SharedPreferences uses MODE_PRIVATE
-- [ ] No deprecated storage modes used
-- [ ] SQL injection prevented with parameterized queries
-- [ ] Cache files contain only non-sensitive data
-- [ ] PII not logged
-- [ ] Memory management secure in native code
-- [ ] Data minimization principles followed
-- [ ] Secure deletion implemented where needed
-
----
-
-*Based on official Android documentation from developer.android.com and source.android.com*
+- [Data Storage](https://developer.android.com/privacy-and-security/security-tips#data-storage)
+- [Security with Dynamically Loaded Code](https://developer.android.com/privacy-and-security/security-tips#dynamic-code)
+- [Log Info Disclosure](https://developer.android.com/privacy-and-security/risks/log-info-disclosure)

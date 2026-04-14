@@ -1,21 +1,6 @@
 ---
-name: android-security
+name: android-security-skill
 description: Comprehensive Android app and system security best practices from official Android documentation. Use when implementing security features, reviewing security issues, handling sensitive data, or ensuring compliance with Android security guidelines.
----
-
-# Android Security Best Practices
-
-Official guidelines from Android Open Source Project (AOSP) and Android Developers documentation for building secure Android applications.
-
-## Core Security Principles
-
-1. **Minimize attack surface** - Request only necessary permissions, prefer intents over permissions
-2. **Encrypt in transit** - Always use TLS/HTTPS for network communication
-3. **Secure at rest** - Use internal storage for sensitive data, validate external storage
-4. **Trust verification** - Implement signature permissions, custom trust managers, app choosers
-5. **Keep updated** - Maintain current dependencies, libraries, and security providers
-6. **User control** - Implement app choosers and biometric authentication for sensitive actions
-
 ---
 
 ## Security Topics
@@ -76,6 +61,14 @@ Security for Services, BroadcastReceivers, ContentProviders, and Activities.
 - BroadcastReceiver permissions
 - ContentProvider security
 - Dynamic code loading risks
+
+### [AI Security Risks](reference/ai.md)
+Security considerations for apps using generative AI and Large Language Models (LLMs).
+
+**Key Topics:**
+- Prompt injection
+- Sensitive information disclosure
+- Excessive agency
 
 ### [Common Vulnerabilities](reference/common-vulnerabilities.md)
 Security risks to avoid and testing strategies.

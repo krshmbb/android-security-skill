@@ -1,6 +1,6 @@
 # Android Components Security
 
-Security guidelines for Services, BroadcastReceivers, ContentProviders, Activities, and code loading.
+Security guidelines for Services, BroadcastReceivers, ContentProviders, Activities, and Dynamic Code Loading.
 
 ---
 

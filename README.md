@@ -19,7 +19,8 @@ android-security-skill/
     ├── permissions.md                    # Permission best practices
     ├── cryptography.md                   # Crypto implementations
     ├── components.md                     # Android components security
-    └── common-vulnerabilities.md         # Security risks and testing
+    ├── ai.md                             # AI/LLM security risks
+    └── common-vulnerabilities.md         # Security risks and testing    
 ```
 
 ## Topics Covered
@@ -66,6 +67,11 @@ android-security-skill/
 - Activity security
 - Dynamic code loading risks
 - Native code security
+
+### [AI Security Risks](reference/ai.md)
+- Prompt injection
+- Sensitive information disclosure
+- Excessive agency vulnerabilities
 
 ### [Common Vulnerabilities](reference/common-vulnerabilities.md)
 - Configuration issues
@@ -146,6 +152,7 @@ Before releasing your app:
 - [Android Keystore](https://developer.android.com/privacy-and-security/keystore)
 - [Network Security Config](https://developer.android.com/privacy-and-security/security-config)
 - [Cryptography](https://developer.android.com/privacy-and-security/cryptography)
+- [AI Risks and Mitigations](https://developer.android.com/privacy-and-security/risks/ai-risks/risks-mitigations)
 
 ### Android Open Source Project
 - [Security Best Practices](https://source.android.com/docs/security/best-practices)
@@ -161,6 +168,7 @@ Before releasing your app:
 **Based on:**
 - Android Security Best Practices (Updated March 30, 2026)
 - Android Security Checklist (Updated March 6, 2026)
+- Android AI Risks and Mitigations (Updated December 16, 2025)
 - Android Open Source Project Security Documentation (2026)
 
 ## License
