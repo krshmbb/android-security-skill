@@ -1,6 +1,6 @@
 # Android Components Security
 
-Security guidelines for Services, BroadcastReceivers, ContentProviders, Activities, and Dynamic Code Loading.
+Security guidelines for Services, BroadcastReceivers and Activities.
 
 ---
 
@@ -32,17 +32,16 @@ Security guidelines for Services, BroadcastReceivers, ContentProviders, Activiti
 **Best Practice**
 - Always explicitly set `android:exported`
 - Set to `false` unless component needs to be accessed by other apps
-- Critical for Android 12 (API 31) and above
+- Protect exported services with a permission, preferably `signature` when appropriate
+- Validate all incoming intent data
 
 ---
 
 ## Services Security
 
-### Default Behavior
-
-**Services Are Not Exported by Default**
-- Safer default for security
-- Must explicitly export if needed by other apps
+### Recommendations
+- Always explicitly declare `android:exported`
+- Do not rely on default export behavior
 
 ### Service Protection
 
@@ -60,86 +59,14 @@ Security guidelines for Services, BroadcastReceivers, ContentProviders, Activiti
     android:protectionLevel="signature" />
 ```
 
-### Runtime Permission Checks
-
-**Verify Caller Permissions**
-```kotlin
-class SecureService : Service() {
-
-    override fun onBind(intent: Intent): IBinder? {
-        // Check calling permission
-        if (checkCallingPermission(REQUIRED_PERMISSION)
-            != PackageManager.PERMISSION_GRANTED) {
-            throw SecurityException(
-                "Caller lacks required permission: $REQUIRED_PERMISSION"
-            )
-        }
-        return binder
-    }
-
-    override fun onStartCommand(
-        intent: Intent?,
-        flags: Int,
-        startId: Int
-    ): Int {
-        // Verify caller for started services
-        verifyCallerIdentity()
-        return super.onStartCommand(intent, flags, startId)
-    }
-
-    private fun verifyCallerIdentity() {
-        val callerUid = Binder.getCallingUid()
-        // Verify UID is from trusted app
-    }
-
-    companion object {
-        const val REQUIRED_PERMISSION = "com.example.myapp.SERVICE_PERMISSION"
-    }
-}
-```
-
-### Background Services (Android 5.0+)
-
-**Use JobScheduler**
-```kotlin
-// More secure and efficient than traditional services
-val jobScheduler = getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-
-val jobInfo = JobInfo.Builder(
-    JOB_ID,
-    ComponentName(this, MyJobService::class.java)
-)
-    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-    .setPersisted(true)
-    .build()
-
-jobScheduler.schedule(jobInfo)
-```
-
-**Benefits**
-- System manages execution
-- Better battery optimization
-- Automatic retry handling
-- More secure than always-running services
-
-### Service Security Checklist
-
-- [ ] `android:exported` explicitly declared
-- [ ] Permissions required for exported services
-- [ ] Calling permissions verified at runtime
-- [ ] Signature-level permissions for same-developer apps
-- [ ] JobScheduler used for background work (Android 5.0+)
-- [ ] Input validation for all service calls
-
 ---
 
 ## BroadcastReceiver Security
 
 ### Default Behavior
-
-**Receivers Are Exported by Default**
 - If intent filter declared in manifest, receiver is exported
 - Potentially accessible by any app
+- Apply security permissions within the manifest to prevent unauthorized apps from sending intents to the receiver
 
 ### Receiver Protection
 
@@ -161,6 +88,9 @@ jobScheduler.schedule(jobInfo)
 ```
 
 **Private Receiver (Not Exported)**
+- Not accessible to other apps through normal IPC
+- Intended for internal app use only
+
 ```xml
 <receiver
     android:name=".PrivateReceiver"
@@ -178,212 +108,7 @@ sendBroadcast(
     Intent("com.example.myapp.ACTION"),
     "com.example.myapp.RECEIVE_PERMISSION"
 )
-
-// Or use explicit intent
-val intent = Intent(this, MyReceiver::class.java)
-sendBroadcast(intent)
 ```
-
-### Receiving Broadcasts Securely
-
-**Validate Sender**
-```kotlin
-class SecureReceiver : BroadcastReceiver() {
-
-    override fun onReceive(context: Context, intent: Intent) {
-        // Validate intent action
-        if (intent.action != EXPECTED_ACTION) {
-            return
-        }
-
-        // Validate sender (if possible)
-        validateSender(context)
-
-        // Validate all data from intent
-        val data = intent.getStringExtra("data")
-        if (!isValidData(data)) {
-            return
-        }
-
-        // Process broadcast
-        processBroadcast(data)
-    }
-
-    private fun validateSender(context: Context) {
-        // Check sender's signature if needed
-        val callerUid = Binder.getCallingUid()
-        // Verify caller
-    }
-
-    private fun isValidData(data: String?): Boolean {
-        return data != null && data.length < MAX_LENGTH
-    }
-
-    companion object {
-        const val EXPECTED_ACTION = "com.example.myapp.ACTION"
-        const val MAX_LENGTH = 1000
-    }
-}
-```
-
-### LocalBroadcastManager (Deprecated)
-
-**Alternative: In-App Event Bus**
-```kotlin
-// Use in-app event bus for internal communication
-// LiveData, Flow, or EventBus library
-// More efficient and secure than broadcasts
-```
-
-### BroadcastReceiver Checklist
-
-- [ ] `android:exported` explicitly set
-- [ ] Permissions required for exported receivers
-- [ ] Sender permissions enforced for sensitive broadcasts
-- [ ] All broadcast data validated
-- [ ] Local broadcasts used for internal communication
-- [ ] Intent filters not relied upon for security
-
----
-
-## ContentProvider Security
-
-### Export Control
-
-**Explicit Export Declaration**
-```xml
-<!-- Not exported - only accessible by same app -->
-<provider
-    android:name=".PrivateProvider"
-    android:authorities="com.example.myapp.private"
-    android:exported="false" />
-
-<!-- Exported with permissions -->
-<provider
-    android:name=".PublicProvider"
-    android:authorities="com.example.myapp.public"
-    android:exported="true"
-    android:readPermission="com.example.myapp.READ_PROVIDER"
-    android:writePermission="com.example.myapp.WRITE_PROVIDER" />
-```
-
-### Permission Control
-
-**Separate Read/Write Permissions**
-```xml
-<permission
-    android:name="com.example.myapp.READ_PROVIDER"
-    android:protectionLevel="normal" />
-
-<permission
-    android:name="com.example.myapp.WRITE_PROVIDER"
-    android:protectionLevel="signature" />
-```
-
-**Path-Level Permissions**
-```xml
-<provider
-    android:name=".MyProvider"
-    android:authorities="com.example.myapp.provider"
-    android:exported="true">
-    <path-permission
-        android:path="/sensitive/*"
-        android:readPermission="com.example.myapp.READ_SENSITIVE"
-        android:writePermission="com.example.myapp.WRITE_SENSITIVE" />
-</provider>
-```
-
-### URI Permission Grants
-
-**Granular Access Control**
-```xml
-<provider
-    android:name=".MyProvider"
-    android:authorities="com.example.myapp.provider"
-    android:exported="true"
-    android:grantUriPermissions="true">
-    <grant-uri-permission android:pathPattern="/public/.*" />
-</provider>
-```
-
-**Grant Temporary Access**
-```kotlin
-// Grant temporary URI permission
-val uri = ContentUris.withAppendedId(
-    Uri.parse("content://com.example.myapp.provider/items"),
-    itemId
-)
-
-val intent = Intent(Intent.ACTION_VIEW).apply {
-    setDataAndType(uri, "image/jpeg")
-    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-}
-startActivity(intent)
-```
-
-### SQL Injection Prevention
-
-**Use Parameterized Queries**
-```kotlin
-class SecureProvider : ContentProvider() {
-
-    override fun query(
-        uri: Uri,
-        projection: Array<String>?,
-        selection: String?,
-        selectionArgs: Array<String>?,
-        sortOrder: String?
-    ): Cursor? {
-        // Good - parameterized query
-        val db = dbHelper.readableDatabase
-        return db.query(
-            TABLE_NAME,
-            projection,
-            selection,  // Use placeholders: "user_id = ?"
-            selectionArgs,  // Actual values
-            null, null,
-            sortOrder
-        )
-    }
-
-    override fun update(
-        uri: Uri,
-        values: ContentValues?,
-        selection: String?,
-        selectionArgs: Array<String>?
-    ): Int {
-        // Never concatenate user input into SQL
-        val db = dbHelper.writableDatabase
-        return db.update(
-            TABLE_NAME,
-            values,
-            selection,  // Use placeholders
-            selectionArgs
-        )
-    }
-}
-```
-
-**Never Do String Concatenation**
-```kotlin
-// BAD - SQL injection vulnerability
-// val query = "SELECT * FROM users WHERE name = '$userName'"
-
-// GOOD - parameterized query
-val selection = "name = ?"
-val selectionArgs = arrayOf(userName)
-```
-
-### ContentProvider Checklist
-
-- [ ] `android:exported` explicitly declared
-- [ ] Permissions required for exported providers
-- [ ] Separate read/write permissions defined
-- [ ] Path-level permissions for sensitive data
-- [ ] URI permission grants configured appropriately
-- [ ] SQL injection prevented with parameterized queries
-- [ ] All input data validated
-- [ ] No world-readable/writable content
 
 ---
 
@@ -410,220 +135,228 @@ val selectionArgs = arrayOf(userName)
     android:exported="false" />
 ```
 
-### Intent Data Validation
+### Activity Permissions
 
-**Validate Intent Extras**
+**Protected Activity**
+```xml
+<activity
+    android:name=".SensitiveActivity"
+    android:exported="true"
+    android:permission="com.example.myapp.ACCESS_SENSITIVE">
+    <intent-filter>
+        <action android:name="com.example.myapp.OPEN_SENSITIVE" />
+        <category android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+</activity>
+
+<permission
+    android:name="com.example.myapp.ACCESS_SENSITIVE"
+    android:protectionLevel="signature" />
+```
+
+### Deep Link Security
+
+**Validate Deep Link URIs**
 ```kotlin
-class SecureActivity : AppCompatActivity() {
+class DeepLinkActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Validate all data from intent
-        val userId = intent.getStringExtra("user_id")
-        if (!isValidUserId(userId)) {
+        // Handle deep link
+        intent?.data?.let { uri ->
+            if (!isValidDeepLink(uri)) {
+                finish()
+                return
+            }
+            handleDeepLink(uri)
+        }
+    }
+
+    private fun isValidDeepLink(uri: Uri): Boolean {
+        // Validate scheme
+        if (uri.scheme != "https") return false
+
+        // Validate host
+        if (uri.host != "example.com") return false
+
+        // Validate path
+        val allowedPaths = listOf("/profile", "/settings", "/content")
+        if (!allowedPaths.any { uri.path?.startsWith(it) == true }) {
+            return false
+        }
+
+        // Validate query parameters
+        uri.queryParameterNames.forEach { param ->
+            if (!isValidQueryParam(param, uri.getQueryParameter(param))) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    private fun isValidQueryParam(name: String, value: String?): Boolean {
+        value ?: return false
+        // Prevent path traversal
+        if (value.contains("..")) return false
+        // Prevent script injection
+        if (value.contains("<") || value.contains(">")) return false
+        return true
+    }
+}
+```
+
+**Deep Link Manifest**
+```xml
+<activity
+    android:name=".DeepLinkActivity"
+    android:exported="true">
+    <intent-filter android:autoVerify="true">
+        <action android:name="android.intent.action.VIEW" />
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+        <data
+            android:scheme="https"
+            android:host="example.com"
+            android:pathPrefix="/app" />
+    </intent-filter>
+</activity>
+```
+
+### Task Hijacking Prevention
+
+**Default vs Custom Affinity**
+```xml
+<!-- Secure: Empty affinity prevents task hijacking -->
+<activity
+    android:name=".BankingActivity"
+    android:taskAffinity=""
+    android:exported="false" />
+
+<!-- Risky: Custom affinity can be exploited -->
+<activity
+    android:name=".SharedActivity"
+    android:taskAffinity="com.example.shared"
+    android:exported="true" />
+```
+
+**Task Affinity Attacks**
+- Malicious apps can use same taskAffinity to inject activities
+- UI redressing attacks (phishing overlays)
+- Activity lifecycle manipulation
+
+**Prevention**
+- Use empty taskAffinity (`android:taskAffinity=""`) for sensitive activities
+- Keep activities in separate tasks when handling sensitive data
+- Avoid exported activities with custom task affinities
+
+**Security Flags**
+- `android:taskAffinity=""` - Prevents other apps from placing activities in your task
+- `android:excludeFromRecents="true"` - Hides sensitive activities from recent apps list
+- `android:documentLaunchMode="never"` - Prevents creating separate task documents
+
+**Runtime Protection**
+```kotlin
+class SensitiveActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Prevent screenshots and screen recording
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE
+        )
+
+        // Verify task affinity
+        if (!isTaskSecure()) {
             finish()
             return
         }
-
-        // Process validated data
-        loadUserData(userId)
     }
 
-    private fun isValidUserId(userId: String?): Boolean {
-        return userId != null &&
-               userId.matches(Regex("^[0-9]+$")) &&
-               userId.length <= 10
+    private fun isTaskSecure(): Boolean {
+        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val tasks = activityManager.appTasks
+        return tasks.isNotEmpty() && tasks[0].taskInfo.numActivities == 1
     }
 }
 ```
 
-### Prevent Task Hijacking
+---
 
-**Launch Mode Configuration**
+## Component Metadata Security
+
+### Process Isolation
+
+**Isolated Processes**
 ```xml
-<activity
-    android:name=".SensitiveActivity"
-    android:exported="false"
-    android:launchMode="singleTask"
-    android:taskAffinity="" />
+<!-- Run service in isolated process (no permissions) -->
+<service
+    android:name=".UntrustedContentService"
+    android:isolatedProcess="true"
+    android:exported="false" />
 ```
 
-**Check Calling Activity**
-```kotlin
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-
-    // Verify caller for sensitive activities
-    val callerUid = Binder.getCallingUid()
-    if (!isTrustedCaller(callerUid)) {
-        finish()
-        return
-    }
-}
-```
-
----
-
-## Dynamic Code Loading
-
-### Risks
-
-**High-Risk Practice**
-- Loading code outside your APK increases compromise likelihood
-- Code injection risks
-- Dynamically loaded code runs with same permissions as APK
-- **Strongly discouraged**
-
-### Never Load From
-
-**Insecure Sources**
-```kotlin
-// BAD - Never load from these locations
-// - Unsecured network locations
-// - Unencrypted protocols (HTTP)
-// - World-writable locations (external storage)
-// - Untrusted sources
-
-// AVOID - Dynamic code loading
-// val dexFile = DexFile(externalCacheDir + "/code.dex")
-```
-
-### If Absolutely Necessary
-
-**Verification Required**
-```kotlin
-// Only if absolutely required and from trusted source
-fun loadCodeSecurely(codePath: File) {
-    // 1. Verify signature
-    if (!verifySignature(codePath)) {
-        throw SecurityException("Invalid code signature")
-    }
-
-    // 2. Verify hash
-    if (!verifyHash(codePath, expectedHash)) {
-        throw SecurityException("Hash mismatch")
-    }
-
-    // 3. Load from internal storage only
-    if (!codePath.absolutePath.startsWith(filesDir.absolutePath)) {
-        throw SecurityException("Code must be in internal storage")
-    }
-
-    // Load code
-    val classLoader = DexClassLoader(
-        codePath.absolutePath,
-        cacheDir.absolutePath,
-        null,
-        javaClass.classLoader
-    )
-}
-```
-
-### Code in APK
-
-**Secure By Default**
-- Code in APK cannot be modified by other applications
-- Protected by application sandboxing
-- Verified during installation
-
----
-
-## Dalvik/ART Virtual Machine
-
-### Not a Security Boundary
-
-**Important Understanding**
-- Dalvik/ART is NOT a security boundary
-- OS-level sandbox is the security boundary
-- Can interoperate with native code without security constraints
-
-### Implications
-
-**Dynamic Class Loading**
-- Be careful with dynamic class loading from unverified sources
-- Don't load from unsecured networks
-- Don't load from external storage
-
----
-
-## Native Code Security
-
-### When to Use Native Code
-
-**Considerations**
-- **Prefer Android SDK** over NDK when possible
-- Native code is more complex
-- Less portable
-- More error-prone
-- Harder to secure
-
-### Memory Management
-
-**Common Vulnerabilities**
-```c
-// Prevent buffer overflows
-void secureCopy(char *dest, const char *src, size_t destSize) {
-    // Good - bounded copy
-    strncpy(dest, src, destSize - 1);
-    dest[destSize - 1] = '\0';
-
-    // Bad - unbounded copy
-    // strcpy(dest, src);  // Buffer overflow!
-}
-
-// Prevent use-after-free
-void secureDelete(void **ptr) {
-    if (ptr && *ptr) {
-        free(*ptr);
-        *ptr = NULL;  // Prevent use-after-free
-    }
-}
-
-// Prevent off-by-one errors
-void processArray(int *array, size_t size) {
-    for (size_t i = 0; i < size; i++) {  // Not <=
-        array[i] = 0;
-    }
-}
-```
-
-### Security Mitigations
-
-**Platform Protections**
-- ASLR (Address Space Layout Randomization)
-- DEP (Data Execution Prevention)
-- Stack canaries
+**Use Cases for Isolated Processes**
+- Processing untrusted data (web content, user files)
+- Rendering third-party content
+- Parsing complex file formats
+- Running potentially vulnerable code
 
 **Limitations**
-- These mitigate but don't prevent memory errors
-- Careful coding still required
+- No access to app's normal permissions
+- Cannot bind to other services outside the isolated process
+- Cannot access shared app data
 
-### Application Sandbox
+### Document Launch Mode
 
-**All Code Runs in Sandbox**
-- Native applications run in sandbox
-- Each app gets unique UID
-- Limited permissions
-- Familiarize with Android Security Overview
+**Secure Configuration**
+```xml
+<!-- Prevent document-based task creation -->
+<activity
+    android:name=".SecureDocumentActivity"
+    android:documentLaunchMode="never"
+    android:maxRecents="1" />
+```
+
+**Document Launch Modes**
+- `never` - Don't create new task documents (most secure)
+- `intoExisting` - Reuse existing document task
+- `always` - Always create new document (least secure for sensitive content)
+- `none` - System decides (default)
+
+### Component Aliases
+
+**Security Considerations**
+```xml
+<!-- Activity alias can be enabled/disabled at runtime -->
+<activity-alias
+    android:name=".AliasActivity"
+    android:targetActivity=".RealActivity"
+    android:exported="false"
+    android:enabled="false" />
+```
+
+**Use Case: Dynamic Entry Points**
+```kotlin
+// Enable/disable alias based on feature flag or subscription
+val componentName = ComponentName(this, ".AliasActivity")
+packageManager.setComponentEnabledSetting(
+    componentName,
+    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+    PackageManager.DONT_KILL_APP
+)
+```
+
+**Security Implications**
+- Aliases can be enabled without app restart
+- Each alias needs separate export/permission configuration
+- Aliases can leak app functionality if misconfigured
 
 ---
 
-## Component Security Checklist
+## Official Documentation
 
-Before releasing your app:
-
-- [ ] All components have `android:exported` explicitly set
-- [ ] Exported services protected with permissions
-- [ ] BroadcastReceivers validate all received data
-- [ ] ContentProviders use parameterized queries
-- [ ] ContentProvider permissions properly configured
-- [ ] Activities validate intent extras
-- [ ] Dynamic code loading avoided or secured
-- [ ] Native code free of memory management errors
-- [ ] JobScheduler used for background work
-- [ ] Component permissions use signature level for same-developer apps
-
----
-
-*Based on official Android documentation from developer.android.com and source.android.com*
+- [Interprocess communication](https://developer.android.com/privacy-and-security/security-tips#interprocess-communication)
