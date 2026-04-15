@@ -1,3 +1,5 @@
+Last updated: April 2026
+
 # Communication Security
 
 Guidelines for secure network communication, inter-app communication, IPC, and WebView security.

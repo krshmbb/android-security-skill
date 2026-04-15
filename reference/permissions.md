@@ -1,3 +1,5 @@
+Last updated: April 2026
+
 # Permissions Best Practices
 
 Guidelines for requesting, managing, and minimizing permissions in Android applications.

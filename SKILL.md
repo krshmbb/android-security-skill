@@ -1,3 +1,5 @@
+Last updated: April 2026
+
 ---
 name: android-security-skill
 description: Comprehensive Android app and system security best practices from official Android documentation. Use when implementing security features, reviewing security issues, handling sensitive data, or ensuring compliance with Android security guidelines.

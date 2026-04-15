@@ -1,3 +1,5 @@
+Last updated: April 2026
+
 # Android Components Security
 
 Security guidelines for Services, BroadcastReceivers and Activities.

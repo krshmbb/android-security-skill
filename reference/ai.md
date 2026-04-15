@@ -1,3 +1,5 @@
+Last updated: April 2026
+
 # AI Security Risks
 
 Security guidelines for Android apps using generative AI and Large Language Models (LLMs).

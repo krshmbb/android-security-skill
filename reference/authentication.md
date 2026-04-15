@@ -1,3 +1,5 @@
+Last updated: April 2026
+
 # Authentication & Credentials
 
 Guidelines for user authentication, biometrics, and credential management in Android applications.

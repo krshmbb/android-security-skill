@@ -1,3 +1,5 @@
+Last updated: April 2026
+
 # Data Storage Security
 
 Guidelines for secure storage of sensitive data and logging in Android applications.
