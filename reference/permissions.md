@@ -115,41 +115,11 @@ startActivityForResult(intent, REQUEST_OPEN_DOCUMENT)
 
 **Request at Runtime**
 ```kotlin
-// Check if permission is granted
-if (ContextCompat.checkSelfPermission(
-        this,
-        Manifest.permission.ACCESS_FINE_LOCATION
-    ) != PackageManager.PERMISSION_GRANTED
-) {
-    // Request permission
-    ActivityCompat.requestPermissions(
-        this,
-        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-        REQUEST_LOCATION_PERMISSION
-    )
-} else {
-    // Permission already granted
-    useLocation()
+// Modern approach - Activity Result API
+val launcher = registerForActivityResult(RequestPermission()) { isGranted ->
+    if (isGranted) useLocation() else showPermissionDeniedMessage()
 }
-
-// Handle result
-override fun onRequestPermissionsResult(
-    requestCode: Int,
-    permissions: Array<String>,
-    grantResults: IntArray
-) {
-    when (requestCode) {
-        REQUEST_LOCATION_PERMISSION -> {
-            if (grantResults.isNotEmpty() &&
-                grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                useLocation()
-            } else {
-                // Permission denied
-                showPermissionDeniedMessage()
-            }
-        }
-    }
-}
+launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
 ```
 
 ---
@@ -433,20 +403,30 @@ fun getContact(contactId: String): Contact {
 
 **Related Permissions**
 - Permissions grouped by functionality
-- Granting one may grant others in same group
 - Users see group in permission prompt
+- **WARNING**: Do not rely on group behavior
 
 **Example Groups**
 - CONTACTS: READ_CONTACTS, WRITE_CONTACTS
 - LOCATION: ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION
 - STORAGE: READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE
 
-**Implication**
+**Critical: Always Check Each Permission (Android 8.0+)**
 ```kotlin
-// After user grants ACCESS_FINE_LOCATION
-// ACCESS_COARSE_LOCATION is also granted
-// Don't rely on this behavior - always check permissions
+// WRONG - Don't assume related permissions are granted
+// if (hasContactsPermission) writeContacts()
+
+// CORRECT - Always check the specific permission you need
+if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CONTACTS)
+    == PackageManager.PERMISSION_GRANTED) {
+    writeContacts()
+}
 ```
+
+**Why Not to Rely on Groups**
+- Group behavior can change across Android versions
+- Permissions may be granted/revoked individually
+- Future Android versions may separate grouped permissions
 
 ---
 
@@ -488,23 +468,4 @@ if (!Settings.System.canWrite(this)) {
 
 ---
 
-## Permissions Checklist
-
-Before releasing your app:
-
-- [ ] Only necessary permissions requested
-- [ ] Intents used instead of permissions where possible
-- [ ] Runtime permissions requested at appropriate times
-- [ ] Permission rationale shown to users
-- [ ] Permission denials handled gracefully
-- [ ] Custom permissions use appropriate protection levels
-- [ ] Signature protection used for same-developer apps
-- [ ] File sharing uses FileProvider and content:// URIs
-- [ ] Permission-protected data not leaked
-- [ ] Device identifiers avoided (UUID used instead)
-- [ ] Scoped storage used (Android 10+)
-- [ ] Special permissions properly requested
-
----
-
-*Based on official Android documentation from developer.android.com and source.android.com*
+- [Permissions](https://developer.android.com/privacy-and-security/security-tips#permissions)

@@ -20,7 +20,7 @@ android-security-skill/
     ├── cryptography.md                   # Crypto implementations
     ├── components.md                     # Android components security
     ├── ai.md                             # AI/LLM security risks
-    └── common-vulnerabilities.md         # Security risks and testing    
+    └── common-vulnerabilities.md         # Common security risks    
 ```
 
 ## Topics Covered
@@ -43,7 +43,6 @@ android-security-skill/
 - Passkeys and biometric authentication
 - Account Manager
 - Token management
-- Multi-factor authentication
 
 ### [Permissions](reference/permissions.md)
 - Minimal permission requests
@@ -66,12 +65,11 @@ android-security-skill/
 - ContentProvider security
 - Activity security
 - Dynamic code loading risks
-- Native code security
 
 ### [AI Security Risks](reference/ai.md)
 - Prompt injection
 - Sensitive information disclosure
-- Excessive agency vulnerabilities
+- Excessive agency
 
 ### [Common Vulnerabilities](reference/common-vulnerabilities.md)
 - Configuration issues
@@ -126,23 +124,6 @@ android-security-skill/
 4. **Trust verification** - Implement proper authentication
 5. **Keep updated** - Maintain current dependencies
 6. **User control** - Implement biometric auth for sensitive actions
-
-## Security Checklist
-
-Before releasing your app:
-
-- [ ] Network communication uses HTTPS
-- [ ] Sensitive data in internal storage only
-- [ ] Minimal permissions requested
-- [ ] `android:exported` explicitly set
-- [ ] ContentProviders secured
-- [ ] Input validation implemented
-- [ ] SQL injection prevented
-- [ ] Standard cryptography used
-- [ ] No hardcoded secrets
-- [ ] WebView JavaScript controlled
-- [ ] Dependencies up to date
-- [ ] `android:debuggable="false"` in production
 
 ## Official Documentation Sources
 
