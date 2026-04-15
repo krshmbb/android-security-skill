@@ -3,6 +3,20 @@ name: android-security-skill
 description: Comprehensive Android app and system security best practices from official Android documentation. Use when implementing security features, reviewing security issues, handling sensitive data, or ensuring compliance with Android security guidelines.
 ---
 
+## Disclaimer
+
+This AI skill is provided "as is", without warranty of any kind, express or implied.
+
+The generated code may contain errors, security vulnerabilities, or unintended behavior. 
+You are solely responsible for reviewing, testing, and validating any output before use.
+
+The author assumes no liability for any damages arising from the use of this skill.
+
+## Intended Use
+
+This skill is intended as an assistive tool for developers. 
+It is not guaranteed to produce secure, production-ready, or legally compliant code.
+
 ## Security Topics
 
 ### [Communication Security](reference/communication-security.md)
@@ -82,50 +96,6 @@ Security risks to avoid and testing strategies.
 
 ---
 
-## Quick Security Checklist
-
-Before releasing your app:
-
-- [ ] All network communication uses HTTPS with Network Security Configuration
-- [ ] Sensitive data stored in internal storage only
-- [ ] Permissions minimized to only necessary ones
-- [ ] `android:exported` explicitly set for all components
-- [ ] Content Providers properly secured with permissions
-- [ ] Input validation implemented for all external data
-- [ ] SQL injection prevented with parameterized queries
-- [ ] Cryptography uses standard JCA providers (no custom implementations)
-- [ ] API keys not committed to source control
-- [ ] WebView JavaScript disabled or restricted to trusted content
-- [ ] Dynamic code loading avoided or secured
-- [ ] Biometric/credential authentication for sensitive operations
-- [ ] All dependencies and libraries up to date
-- [ ] `android:debuggable="false"` in production
-- [ ] Vulnerability scanning completed
-- [ ] Play Integrity API implemented
-
----
-
-## Additional Resources
-
-### App Integrity & Verification
-- Play Integrity API - Verify app authenticity and device integrity
-- Advanced Protection Mode - Enhanced security for sensitive apps
-- Certificate Transparency - Compliance with Google's CT policy
-- Developer Verification - Required starting September 2026 for select regions
-
-### System Security (Device Manufacturers)
-- SELinux - Defines and enforces Android's security model
-- Root Processes - Minimize code running as root
-- Security Patch Level (SPL) - Monthly update requirements
-
-### Other Security Tools
-- Safe Browsing - Avoid known threat URLs
-- reCAPTCHA - Challenge malicious traffic
-- Hardware-Backed Keys - TEE integration
-- Direct Boot - Actions before device unlock
-
----
-
 ## Official Documentation Links
 
 **Android Developers (developer.android.com)**
@@ -141,7 +111,3 @@ Before releasing your app:
 - [System Security Best Practices](https://source.android.com/docs/security/best-practices/system)
 - [Android Security Overview](https://source.android.com/docs/security)
 - [Monthly Security Bulletins](https://source.android.com/docs/security/bulletin)
-
----
-
-*This skill is based exclusively on official Android documentation from Android Open Source Project (AOSP) and Android Developers (developer.android.com), current as of April 2026.*

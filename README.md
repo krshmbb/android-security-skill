@@ -154,6 +154,8 @@ android-security-skill/
 
 ## License
 
+MIT License - see [LICENSE](LICENSE) file for details.
+
 This skill is based on official Android documentation, which is licensed under the Apache License 2.0.
 
 ## Official Documentation Sources
