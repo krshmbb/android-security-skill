@@ -156,15 +156,22 @@ android-security-skill/
 
 This skill is based on official Android documentation, which is licensed under the Apache License 2.0.
 
-## Contributing
+## Official Documentation Sources
 
-This skill should only contain information from official Android documentation sources. When updating:
+### Android Developers
+- [Security Best Practices](https://developer.android.com/privacy-and-security/security-best-practices)
+- [Security Checklist](https://developer.android.com/privacy-and-security/security-tips)
+- [Android Keystore](https://developer.android.com/privacy-and-security/keystore)
+- [Network Security Config](https://developer.android.com/privacy-and-security/security-config)
+- [Cryptography](https://developer.android.com/privacy-and-security/cryptography)
+- [AI Risks and Mitigations](https://developer.android.com/privacy-and-security/risks/ai-risks/risks-mitigations)
 
-1. Verify information comes from official sources
-2. Include code examples where helpful
-3. Keep examples current with latest Android APIs
-4. Update version information and dates
-5. Never add assumptions or non-official content
+### Android Open Source Project
+- [Security Best Practices](https://source.android.com/docs/security/best-practices)
+- [App Security](https://source.android.com/docs/security/best-practices/app)
+- [System Security](https://source.android.com/docs/security/best-practices/system)
+- [Security Overview](https://source.android.com/docs/security)
+- [Security Bulletins](https://source.android.com/docs/security/bulletin)
 
 ## Feedback
 
