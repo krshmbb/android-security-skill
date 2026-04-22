@@ -19,8 +19,7 @@ android-security-skill/
     ├── permissions.md                    # Permission best practices
     ├── cryptography.md                   # Crypto implementations
     ├── components.md                     # Android components security
-    ├── ai.md                             # AI/LLM security risks
-    └── common-vulnerabilities.md         # Common security risks    
+    └── ai.md                             # AI/LLM security risks
 ```
 
 ## Topics Covered
@@ -31,7 +30,6 @@ android-security-skill/
 - Cryptography
 - Android Components
 - AI Security Risks
-- Common Vulnerabilities
 
 ## Quick Start
 

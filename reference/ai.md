@@ -6,12 +6,6 @@ Security guidelines for Android apps using generative AI and Large Language Mode
 
 ---
 
-## Overview
-
-Generative AI (GenAI) integration in Android apps presents unique security challenges that extend beyond standard software development. A multi-faceted security approach is required to address AI-specific risks.
-
----
-
 ## Primary AI Risks
 
 ### Risk Categories (OWASP Classification)
@@ -109,14 +103,13 @@ Vulnerability where LLMs unintentionally reveal confidential, private, proprieta
 - App uninstalls
 - Negative reviews
 
-
 ### 3. Excessive Agency
 
 #### Definition
 
 Vulnerability where an LLM is granted unnecessary or overly permissive abilities to interact with other systems. Attackers exploit this via prompt injection to perform unintended, unauthorized, and harmful actions.
 
-#### Risk Scenarios for Android Apps
+#### Impact on Android Apps
 
 **Unauthorized System Access**
 - File system exposure allowing modification or deletion
