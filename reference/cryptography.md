@@ -21,219 +21,105 @@ Guidelines for implementing secure cryptography in Android applications.
 - Standard implementations are thoroughly tested
 - Framework implementations receive security updates
 
----
+### Provider Specification Rules
 
-## Encryption Algorithms
+**Android Keystore System**
+- **MUST** specify the provider when using Android Keystore
+- Example: `KeyGenerator.getInstance("AES", "AndroidKeyStore")`
 
-### AES (Advanced Encryption Standard)
-
-**Key Sizes**
-```kotlin
-// Recommended - 256-bit for commercial applications
-val keySize = 256
-
-// Minimum acceptable - 128-bit
-val minKeySize = 128
-
-// Generate AES key
-val keyGenerator = KeyGenerator.getInstance("AES")
-keyGenerator.init(keySize, SecureRandom())
-val secretKey = keyGenerator.generateKey()
-```
-
-**Best Practices**
-- Use 256-bit keys for commercial applications
-- 128-bit minimum for less sensitive data
-- Never use keys smaller than 128-bit
-
-### Elliptic Curve Cryptography
-
-**Key Sizes**
-```kotlin
-// Recommended key sizes
-val keySize = 256  // or 224
-
-// Generate EC key pair
-val keyPairGenerator = KeyPairGenerator.getInstance("EC")
-keyPairGenerator.initialize(keySize, SecureRandom())
-val keyPair = keyPairGenerator.generateKeyPair()
-```
-
-**Requirements**
-- Use 224-bit or 256-bit public key sizes
-- Provides strong security with smaller key sizes than RSA
+**All Other Situations**
+- **DO NOT** specify a provider to avoid compatibility problems
+- Let the system select the best provider
+- Example: `KeyGenerator.getInstance("AES")`
 
 ---
 
-## Block Cipher Modes
+## Recommended Algorithms
 
-### Understanding Block Modes
+Use these algorithms for cryptographic operations:
 
-**Available Modes**
-- **CBC** (Cipher Block Chaining)
-- **CTR** (Counter Mode)
-- **GCM** (Galois/Counter Mode) - Recommended
-
-**When to Use Each**
-```kotlin
-// GCM - Best choice (provides encryption + integrity)
-val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-
-// CTR - When you need streaming encryption
-val cipherCTR = Cipher.getInstance("AES/CTR/NoPadding")
-
-// CBC - Legacy support
-val cipherCBC = Cipher.getInstance("AES/CBC/PKCS5Padding")
-```
-
-### Initialization Vector (IV)
-
-**Critical Requirements**
-
-**For CTR Mode**
-```kotlin
-// NEVER reuse IV/Counter in CTR mode
-// Use cryptographically random IV
-val iv = ByteArray(16)
-SecureRandom().nextBytes(iv)
-
-val cipher = Cipher.getInstance("AES/CTR/NoPadding")
-cipher.init(Cipher.ENCRYPT_MODE, secretKey, IvParameterSpec(iv))
-```
-
-**For CBC Mode**
-```kotlin
-// Use random IV for each encryption
-val iv = ByteArray(16)
-SecureRandom().nextBytes(iv)
-
-val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-cipher.init(Cipher.ENCRYPT_MODE, secretKey, IvParameterSpec(iv))
-```
-
-**For GCM Mode**
-```kotlin
-// GCM uses a nonce - must be unique for each encryption
-val nonce = ByteArray(12)  // 12 bytes for GCM
-SecureRandom().nextBytes(nonce)
-
-val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-cipher.init(Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(128, nonce))
-```
-
-**Rules**
-- Never reuse IV/nonce with same key
-- Always use cryptographically random IV
-- Store IV with ciphertext (IV doesn't need to be secret)
+| Class | Recommended Algorithm |
+|-------|----------------------|
+| **Cipher** | AES in CBC or GCM mode with 256-bit keys (e.g., `AES/GCM/NoPadding`) |
+| **MessageDigest** | SHA-2 family (e.g., `SHA-256`) |
+| **Mac** | SHA-2 family HMAC (e.g., `HmacSHA256`) |
+| **Signature** | SHA-2 family with ECDSA (e.g., `SHA256withECDSA`) |
 
 ---
 
-## Integrity Protection
+## Common Cryptographic Operations
 
-### Why Integrity Matters
+### Encrypt a Message
 
-**Without Integrity**
-- Attacker can modify encrypted data
-- May lead to plaintext recovery attacks
-- Can't detect tampering
-
-### Implementation Options
-
-**Option 1: GCM Mode (Recommended)**
 ```kotlin
-// GCM provides both encryption and integrity
-val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-cipher.init(Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(128, nonce))
-
-// Encrypt data
-val ciphertext = cipher.doFinal(plaintext)
-// GCM tag is appended to ciphertext automatically
+val plaintext: ByteArray = ...
+val keygen = KeyGenerator.getInstance("AES")
+keygen.init(256)
+val key: SecretKey = keygen.generateKey()
+val cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING")
+cipher.init(Cipher.ENCRYPT_MODE, key)
+val ciphertext: ByteArray = cipher.doFinal(plaintext)
+val iv: ByteArray = cipher.iv
 ```
 
-**Option 2: Encrypt-then-MAC**
+**Important**: Store the IV with the ciphertext for decryption.
+
+### Generate a Message Digest
+
 ```kotlin
-// 1. Encrypt data
-val cipher = Cipher.getInstance("AES/CTR/NoPadding")
-cipher.init(Cipher.ENCRYPT_MODE, secretKey, IvParameterSpec(iv))
-val ciphertext = cipher.doFinal(plaintext)
-
-// 2. Calculate MAC
-val mac = Mac.getInstance("HmacSHA256")
-mac.init(macKey)
-val tag = mac.doFinal(ciphertext)
-
-// 3. Store: iv || ciphertext || tag
+val message: ByteArray = ...
+val md = MessageDigest.getInstance("SHA-256")
+val digest: ByteArray = md.digest(message)
 ```
 
-### HMAC Algorithms
+### Generate a Digital Signature
 
-**Supported Algorithms**
 ```kotlin
-// Strongest - Use for new implementations
-val mac = Mac.getInstance("HmacSHA512")
-
-// Good - Widely supported
-val mac256 = Mac.getInstance("HmacSHA256")
-
-// Acceptable - Minimum recommendation
-val mac1 = Mac.getInstance("HmacSHA1")
+val message: ByteArray = ...
+val key: PrivateKey = ...
+val s = Signature.getInstance("SHA256withECDSA")
+    .apply {
+        initSign(key)
+        update(message)
+    }
+val signature: ByteArray = s.sign()
 ```
 
-**Best Practice**
-- Use HMAC-SHA256 or stronger
-- Never use HMAC-MD5 or non-cryptographic hashes
+### Verify a Digital Signature
+
+```kotlin
+val message: ByteArray = ...
+val signature: ByteArray = ...
+val key: PublicKey = ...
+val s = Signature.getInstance("SHA256withECDSA")
+    .apply {
+        initVerify(key)
+        update(message)
+    }
+val valid: Boolean = s.verify(signature)
+```
 
 ---
 
-## Key Generation
+## Deprecated Functionality to Avoid
 
-### Secure Random Number Generation
+### Do Not Use
 
-**Always Use SecureRandom**
-```kotlin
-// Good - Cryptographically secure
-val secureRandom = SecureRandom()
-val key = ByteArray(32)  // 256-bit key
-secureRandom.nextBytes(key)
+**Bouncy Castle Algorithms**
+- Deprecated when explicitly requested
+- Let the system choose the provider instead
 
-// Bad - NEVER use regular Random for crypto
-// val random = Random()
-// random.nextBytes(key)  // INSECURE!
-```
+**Crypto Provider**
+- Removed as of Android 9 (API 28)
+- Do not rely on this provider
 
-**Key Derivation**
-```kotlin
-// Use proper key derivation function
-val keySpec = PBEKeySpec(
-    password.toCharArray(),
-    salt,
-    iterations = 100000,  // High iteration count
-    keyLength = 256
-)
-val keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
-val key = keyFactory.generateSecret(keySpec)
-```
+**security-crypto Jetpack Library**
+- All APIs deprecated in version 1.1.0+
+- Migrate to direct Android Keystore usage
 
-### Important Rules
-
-**Never Use Non-Random Keys**
-- Don't derive keys from passwords without proper KDF
-- Don't use hardcoded keys in source code
-- Don't generate keys from predictable sources
-
-**Weakens Cryptography**
-```kotlin
-// Bad - Predictable key
-// val key = "my_secret_key".toByteArray()
-
-// Bad - Weak derivation
-// val key = password.hashCode().toString().toByteArray()
-
-// Good - Proper random generation
-val keyGenerator = KeyGenerator.getInstance("AES")
-keyGenerator.init(256, SecureRandom())
-val key = keyGenerator.generateKey()
-```
+**PBE without Initialization Vector**
+- Always pass explicit IV for password-based encryption
+- Never rely on default IV generation
 
 ---
 
@@ -245,7 +131,39 @@ val key = keyGenerator.generateKey()
 - Secure long-term key storage and retrieval
 - Hardware-backed encryption (when available)
 - Keys never leave secure hardware
-- User authentication required for key use
+- Optional user authentication for key use (configure when needed)
+
+**When to Require User Authentication**
+
+Require user authentication (biometric/PIN/password) for keys that protect:
+- Financial transactions or payments
+- Sensitive personal data (health records, private messages)
+- Access to critical account operations
+- Data that requires proof of user presence
+
+Do NOT require authentication for:
+- Background operations that run without user interaction
+- App-to-server communication keys
+- Non-sensitive data encryption
+- Keys that need automatic access on app startup
+
+### When to Use: Keystore vs Keychain
+
+**Android Keystore Provider**
+
+Use when you need **app-specific credentials** that only your app should access:
+- Credentials are private to your app
+- No user selection UI required
+- Simpler implementation for single-app scenarios
+- Best for most app-specific encryption needs
+
+**KeyChain API**
+
+Use when you need **system-wide credentials** shared across apps:
+- Multiple apps can access the same credentials with user consent
+- Users select which credentials to share via system UI
+- Required for enterprise scenarios (VPN, Wi-Fi authentication)
+- Best for certificates and credentials that should be reusable
 
 ### Basic Usage
 
@@ -280,6 +198,14 @@ val secretKey = keyStore.getKey("my_key_alias", null) as SecretKey
 
 ### User Authentication Requirement
 
+**When to Use**
+
+Enable user authentication for keys protecting:
+- Payment or financial data
+- Sensitive user information
+- Operations requiring explicit user consent
+- Data that should only be accessible when user is present
+
 **Require Biometric/PIN for Key Use**
 ```kotlin
 keyGenerator.init(
@@ -290,15 +216,21 @@ keyGenerator.init(
     .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
     .setUserAuthenticationRequired(true)
-    .setUserAuthenticationValidityDurationSeconds(30)
+    .setUserAuthenticationValidityDurationSeconds(30)  // Key valid for 30 seconds after auth
     .build()
 )
 ```
+
+**Authentication Validity Duration**
+- **Short duration (5-30 seconds)**: For highly sensitive operations like payments
+- **Longer duration (300+ seconds)**: For repeated operations in same session
+- **Per-operation**: Set to `-1` to require authentication for each key use
 
 **Benefits**
 - Keys protected by device lock screen
 - Automatic key invalidation on lock screen change
 - Hardware-backed security
+- Ensures user presence for sensitive operations
 
 ---
 
@@ -402,13 +334,6 @@ android {
 - Firebase: Automatic package name restrictions
 - Custom APIs: Implement server-side package verification
 
-### IP Restrictions
-
-**When Possible**
-- Implement IP allowlists for API calls
-- More applicable to server-side APIs
-- Limited usefulness for mobile clients (dynamic IPs)
-
 ### Monitoring
 
 **Track API Usage**
@@ -430,60 +355,8 @@ fun logApiCall(endpoint: String, success: Boolean) {
 
 ---
 
-## Key Rotation
+## Additional Resources
 
-### Why Rotate Keys
-
-**Security Best Practices**
-- Limit exposure if key is compromised
-- Compliance requirements (ISO 27001: 90 days to 6 months)
-- Reduce cryptanalysis opportunities
-
-### Implementation
-
-**Support Multiple Keys**
-```kotlin
-class KeyManager {
-    private val currentKeyVersion = 2
-
-    fun encrypt(data: ByteArray): EncryptedData {
-        val key = getKey(currentKeyVersion)
-        val ciphertext = performEncryption(data, key)
-        return EncryptedData(ciphertext, currentKeyVersion)
-    }
-
-    fun decrypt(encryptedData: EncryptedData): ByteArray {
-        val key = getKey(encryptedData.keyVersion)
-        return performDecryption(encryptedData.ciphertext, key)
-    }
-
-    private fun getKey(version: Int): SecretKey {
-        return when (version) {
-            1 -> loadKey("key_v1")
-            2 -> loadKey("key_v2")
-            else -> throw IllegalArgumentException("Unknown key version")
-        }
-    }
-}
-
-data class EncryptedData(
-    val ciphertext: ByteArray,
-    val keyVersion: Int
-)
-```
-
-**Re-encryption Strategy**
-```kotlin
-// Gradually re-encrypt data with new key
-fun rotateData(oldData: EncryptedData): EncryptedData {
-    // Decrypt with old key
-    val plaintext = decrypt(oldData)
-
-    // Encrypt with new key
-    return encrypt(plaintext)
-}
-```
-
----
-
-- [Cryptography](https://developer.android.com/privacy-and-security/cryptography)
+- [Android Cryptography](https://developer.android.com/privacy-and-security/cryptography)
+- [Android Keystore System](https://developer.android.com/privacy-and-security/keystore)
+- [API Key Management](https://developer.android.com/privacy-and-security/security-tips#api-keys)

@@ -1,7 +1,6 @@
-Last updated: April 2026
-
 ---
 name: android-security-skill
+
 description: Comprehensive Android app and system security best practices from official Android documentation. Use when implementing security features, reviewing security issues, handling sensitive data, or ensuring compliance with Android security guidelines.
 ---
 
@@ -26,7 +25,6 @@ Secure network communication, IPC, inter-app communication, and WebView security
 
 **Key Topics:**
 - Network Security Configuration (HTTPS/TLS)
-- Inter-app communication (Intents, Content Providers)
 - WebView security best practices
 - IPC mechanisms (Binder, Messenger, Services, Broadcast Receivers)
 
@@ -85,16 +83,6 @@ Security considerations for apps using generative AI and Large Language Models (
 - Prompt injection
 - Sensitive information disclosure
 - Excessive agency
-
-### [Common Vulnerabilities](reference/common-vulnerabilities.md)
-Security risks to avoid and testing strategies.
-
-**Key Topics:**
-- Configuration issues (debuggable, exported)
-- Network vulnerabilities
-- Data security issues
-- Code injection risks
-- WebView vulnerabilities
 
 ---
 

@@ -2,7 +2,7 @@ Last updated: April 2026
 
 # Communication Security
 
-Guidelines for secure network communication, inter-app communication, IPC, and WebView security.
+Guidelines for secure network communication, IPC, and WebView security.
 
 ---
 
@@ -36,7 +36,7 @@ Guidelines for secure network communication, inter-app communication, IPC, and W
 ```
 
 **Best Practices**
-- Disable cleartext traffic: `cleartextTrafficPermitted="false"`
+- Disable cleartext traffic: `cleartextTrafficPermitted="false"` (disabled by default in Android 9+)
 - Use `<debug-overrides>` only during development
 - Implement certificate pinning for additional security
 
@@ -55,30 +55,6 @@ Guidelines for secure network communication, inter-app communication, IPC, and W
 - SMS is neither encrypted nor strongly authenticated
 - Don't rely on unauthenticated SMS for sensitive commands
 - Be aware of SMS spoofing and interception risks
-
----
-
-## Inter-App Communication
-
-### Show App Chooser for Sensitive Data
-
-**When to Use**
-- Implicit intent can launch multiple apps
-- User needs to select trusted app for sensitive data
-
-**Implementation**
-```kotlin
-// Query for at least 2 possible apps before showing chooser
-val intent = Intent(Intent.ACTION_SEND)
-val chooser = Intent.createChooser(intent, "Share via")
-if (intent.resolveActivity(packageManager) != null) {
-    startActivity(chooser)
-}
-```
-
-**Benefits**
-- Gives users control over which app receives their data
-- Prevents accidental data sharing with untrusted apps
 
 ---
 
@@ -107,13 +83,16 @@ if (intent.resolveActivity(packageManager) != null) {
 
 ---
 
-## PendingIntent Security
+## PendingIntent
 
-PendingIntents allow your app to grant other apps or the system the ability to execute a predefined action with your app's permissions. This capability delegation mechanism requires careful security consideration.
+- Lets your app delegate a predefined action to another app or the system
+- The action executes with your app's permissions
+- Grants temporary access to your app's capabilities
+- Requires careful security handling
 
-### Immutability Requirement (Android 12+)
+### Immutability Requirement (API 31+)
 
-**Always Use FLAG_IMMUTABLE**
+**Always Use FLAG_IMMUTABLE by default**
 ```kotlin
 // Android 12 (API 31) and above require explicit mutability flag
 val pendingIntent = PendingIntent.getActivity(
@@ -127,6 +106,15 @@ val pendingIntent = PendingIntent.getActivity(
 ### Mutable PendingIntents (Use with Caution)
 
 **When FLAG_MUTABLE is Required**
+
+Only use `PendingIntent.FLAG_MUTABLE` when there is a specific, documented platform requirement for mutation, such as:
+- Inline reply actions in notifications
+- `RemoteInput`
+- Certain `Notification.CarExtender` cases
+- Location-based intents that need updates
+- Media controls with dynamic actions
+- Other framework-driven cases where the system must modify the intent contents after creation
+
 ```kotlin
 // Only use FLAG_MUTABLE when absolutely necessary
 // Example: Notification actions that need to be updated
@@ -146,12 +134,6 @@ val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
     )
 }
 ```
-
-**Legitimate Use Cases for FLAG_MUTABLE**
-- Inline reply actions in notifications
-- Intents used with Notification.CarExtender
-- Location-based intents that need updates
-- Media controls with dynamic actions
 
 ### Security Best Practices
 
@@ -325,7 +307,7 @@ webView.clearCache(true)
 
 ### Version-Specific Considerations
 
-**Android < 4.4**
+**Android < 4.4 (API Level 19)**
 - Confirm WebView displays only trusted content
 - Use updatable security Provider for SSL protection
 

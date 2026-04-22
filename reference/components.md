@@ -259,6 +259,8 @@ class DeepLinkActivity : AppCompatActivity() {
 - `android:documentLaunchMode="never"` - Prevents creating separate task documents
 
 **Runtime Protection**
+LayoutParams.FLAG_SECURE tells Android not to allow screenshots or to display the window view on a non-secure display e.g. Casting the screen.
+
 ```kotlin
 class SensitiveActivity : AppCompatActivity() {
 

@@ -35,7 +35,6 @@ Guidelines for user authentication, biometrics, and credential management in And
 
 **Characteristics**
 - Phishing-resistant authentication
-- Cryptographic credentials
 - Synced across devices
 - No passwords to remember
 
@@ -48,8 +47,6 @@ Guidelines for user authentication, biometrics, and credential management in And
 
 **Recommended Approach**
 - Use Credential Manager API for passkey integration
-- Follow WebAuthn standards
-- Support platform authenticators
 
 ---
 
@@ -118,7 +115,6 @@ Guidelines for user authentication, biometrics, and credential management in And
 
 **Avoid passing credentials between components**
 - Do not pass passwords or tokens via Intents or Bundles
-- If necessary, use secure Parcelable implementation
 
 ---
 

@@ -19,65 +19,17 @@ android-security-skill/
     ├── permissions.md                    # Permission best practices
     ├── cryptography.md                   # Crypto implementations
     ├── components.md                     # Android components security
-    ├── ai.md                             # AI/LLM security risks
-    └── common-vulnerabilities.md         # Common security risks    
+    └── ai.md                             # AI/LLM security risks
 ```
 
 ## Topics Covered
-
-### [Communication Security](reference/communication-security.md)
-- Network Security Configuration (HTTPS/TLS)
-- Inter-app communication
-- WebView security
-- IPC mechanisms (Services, BroadcastReceivers, Binder, Messenger)
-
-### [Data Storage](reference/data-storage.md)
-- Internal storage (most secure)
-- External storage validation
-- SharedPreferences security
-- Input validation
-- SQL injection prevention
-
-### [Authentication & Credentials](reference/authentication.md)
-- Credential Manager integration
-- Passkeys and biometric authentication
-- Account Manager
-- Token management
-
-### [Permissions](reference/permissions.md)
-- Minimal permission requests
-- Using intents instead of permissions
-- Custom permissions
-- URI permissions
-- FileProvider configuration
-
-### [Cryptography](reference/cryptography.md)
-- JCA security providers
-- AES and Elliptic Curve encryption
-- Android Keystore System
-- API key management
-- Certificate pinning
-- Key rotation
-
-### [Android Components](reference/components.md)
-- Services security
-- BroadcastReceiver protection
-- ContentProvider security
-- Activity security
-- Dynamic code loading risks
-
-### [AI Security Risks](reference/ai.md)
-- Prompt injection
-- Sensitive information disclosure
-- Excessive agency
-
-### [Common Vulnerabilities](reference/common-vulnerabilities.md)
-- Configuration issues
-- Network vulnerabilities
-- Data security issues
-- Code vulnerabilities
-- WebView security
-- Testing strategies
+- Communication Security
+- Data Storage
+- Authentication & Credentials
+- Permissions
+- Cryptography
+- Android Components
+- AI Security Risks
 
 ## Quick Start
 
@@ -116,15 +68,6 @@ android-security-skill/
 - Security patterns
 - Anti-patterns to avoid
 
-## Core Security Principles
-
-1. **Minimize attack surface** - Request only necessary permissions
-2. **Encrypt in transit** - Always use TLS/HTTPS
-3. **Secure at rest** - Use internal storage for sensitive data
-4. **Trust verification** - Implement proper authentication
-5. **Keep updated** - Maintain current dependencies
-6. **User control** - Implement biometric auth for sensitive actions
-
 ## Official Documentation Sources
 
 ### Android Developers
@@ -157,23 +100,6 @@ android-security-skill/
 MIT License - see [LICENSE](LICENSE) file for details.
 
 This skill is based on official Android documentation, which is licensed under the Apache License 2.0.
-
-## Official Documentation Sources
-
-### Android Developers
-- [Security Best Practices](https://developer.android.com/privacy-and-security/security-best-practices)
-- [Security Checklist](https://developer.android.com/privacy-and-security/security-tips)
-- [Android Keystore](https://developer.android.com/privacy-and-security/keystore)
-- [Network Security Config](https://developer.android.com/privacy-and-security/security-config)
-- [Cryptography](https://developer.android.com/privacy-and-security/cryptography)
-- [AI Risks and Mitigations](https://developer.android.com/privacy-and-security/risks/ai-risks/risks-mitigations)
-
-### Android Open Source Project
-- [Security Best Practices](https://source.android.com/docs/security/best-practices)
-- [App Security](https://source.android.com/docs/security/best-practices/app)
-- [System Security](https://source.android.com/docs/security/best-practices/system)
-- [Security Overview](https://source.android.com/docs/security)
-- [Security Bulletins](https://source.android.com/docs/security/bulletin)
 
 ## Feedback
 
