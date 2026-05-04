@@ -149,8 +149,8 @@ Require user authentication (biometric/PIN/password) for keys that protect:
 - Data that requires proof of user presence
 
 Do NOT require authentication for:
-- Background operations that run without user interaction
-- App-to-server communication keys
+- Background operations without non-sensitive data that run without user interaction
+- App-to-server communication keys for non-sensitive operations
 - Non-sensitive data encryption
 - Keys that need automatic access on app startup
 
