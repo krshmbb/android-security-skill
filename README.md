@@ -1,6 +1,6 @@
 # Android Security Skill
 
-A comprehensive security knowledge base for AI-assisted Android application development, based exclusively on official Android documentation from Android Open Source Project (AOSP) and Android Developers. Compatible with Claude Code, OpenAI Codex, Google Gemini, and other AI development tools.
+A comprehensive security knowledge base for AI-assisted Android application development, based exclusively on official Android documentation from Android Open Source Project (AOSP) and Android Developers. Compatible with Claude Code, Android Studio, and other AI development tools.
 
 ## Overview
 
@@ -48,11 +48,46 @@ android-security-skill/
 
 ## Quick Start
 
+### For Android Studio
+
+**Note:** Only skills located within the project's codebase are supported.
+
+1. **Download or clone this skill** to your local machine
+
+2. **Import into your Android Studio project** by copying the skill directory to your project root in one of these locations:
+
+   ```
+   your-project/
+   ├── .skills/
+   │   └── android-security-skill/
+   │       └── SKILL.md
+   ```
+
+   Or:
+
+   ```
+   your-project/
+   ├── .agent/skills/
+   │   └── android-security-skill/
+   │       └── SKILL.md
+   ```
+
+3. **Use the skill:**
+
+   **Automatic Activation**
+   The agent automatically activates relevant skills based on your task. Simply prompt the agent with a related request:
+   - "How do I securely store API keys in Android?"
+   - "Review this code for security vulnerabilities"
+   - "Help me implement biometric authentication"
+
+   **Manual Invocation**
+   Type `@android-security-skill` directly in the chat window to invoke the skill manually.
+
 ### For Claude Code
 
 1. **Copy this skill directory** to one of these locations:
-   - Personal: `~/.claude/skills/android-security/`
-   - Project: `.claude/skills/android-security/`
+   - Personal: `~/.claude/skills/android-security-skill/`
+   - Project: `.claude/skills/android-security-skill/`
 
 2. **Use the skill** by asking Claude about Android security:
    - "How do I securely store API keys in Android?"
@@ -60,42 +95,7 @@ android-security-skill/
    - "Help me implement biometric authentication"
    - "Review this code for security vulnerabilities"
 
-3. **Invoke directly** with `/android-security` followed by your question
-
-### For OpenAI (ChatGPT/Codex)
-
-1. **Upload reference files** as context:
-   - Use "Upload files" to add relevant reference documents from the `reference/` directory
-   - Or upload all reference files at once for comprehensive coverage
-
-2. **Provide system context** in your first message:
-   ```
-   You are an Android security expert. Use the uploaded Android security documentation
-   to provide accurate, secure coding guidance based on official Android best practices.
-   ```
-
-3. **Ask security questions** directly:
-   - "Based on the Android security docs, how should I store API keys?"
-   - "Review my authentication implementation for security issues"
-   - "What are the security best practices for Content Providers?"
-
-### For Google Gemini
-
-1. **Upload documentation** to your conversation:
-   - Click the attachment icon and upload relevant files from the `reference/` directory
-   - For comprehensive help, upload multiple reference files
-
-2. **Set the context** in your initial prompt:
-   ```
-   I'm developing an Android application. Use the uploaded Android security
-   documentation from AOSP and Android Developers to help me implement secure
-   features following official best practices.
-   ```
-
-3. **Query about Android security**:
-   - "According to the Android security guidelines, how should I handle sensitive data?"
-   - "Check my code for security vulnerabilities using the uploaded guidelines"
-   - "What's the secure way to implement WebView according to Android docs?"
+3. **Invoke directly** with `/android-security-skill` followed by your question
 
 ### General Usage Tips
 
