@@ -6,6 +6,21 @@ A comprehensive Claude Code skill for Android application security based exclusi
 
 This skill provides authoritative Android security best practices, code examples, and guidelines to help developers build secure Android applications.
 
+## Target Audience
+
+This skill is designed for **third-party Android application developers** building apps for the Google Play Store and other distribution channels. The content focuses on:
+
+- **App-level security** - Securing your application code, data, and user interactions
+- **Android SDK APIs** - Using public Android framework APIs available to all developers
+- **Best practices** - Following Google's recommended security patterns for production apps
+
+**Not primarily intended for:**
+- Platform/AOSP developers working on the Android operating system itself
+- System app developers requiring platform signing certificates
+- Low-level framework modifications or custom ROM development
+
+Some advanced topics (clearly marked as such) cover system-level APIs for completeness, but the core focus is on practical security for third-party app development.
+
 ## Skill Structure
 
 ```

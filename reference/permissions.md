@@ -163,6 +163,7 @@ launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
 
 **signatureOrSystem**
 - Granted to apps signed with same cert or system apps
+- **Note**: Primarily for platform/system apps. Third-party developers should use `signature` instead, as you cannot sign with the platform certificate.
 - Restricted use
 
 **Example: Signature Protection**

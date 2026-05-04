@@ -63,9 +63,11 @@ Guidelines for secure network communication, IPC, and WebView security.
 ### Prefer Explicit Intents
 
 **Best Practices**
-- Use explicit intents over implicit intents
+- Use explicit intents, or call `setPackage()`, when you know the target app or component
+- Use implicit intents with a chooser when the user should select the app
+- Avoid placing sensitive data in implicit intents unless the receiver is constrained
 - **NEVER use implicit intents for Services** (security hazard)
-- Perform input validation in intent receivers
+- Perform input validation in every exported intent receiver
 
 **Explicit Intent Example**
 ```kotlin
@@ -73,11 +75,30 @@ val intent = Intent(this, TargetActivity::class.java)
 startActivity(intent)
 ```
 
-**Implicit Intent with Verification**
+**Constrained Cross-App Intent**
 ```kotlin
-val intent = Intent(Intent.ACTION_VIEW)
-if (intent.resolveActivity(packageManager) != null) {
-    startActivity(Intent.createChooser(intent, "Open with"))
+val intent = Intent("com.example.partnerapp.SECURE_ACTION").apply {
+    setPackage("com.example.partnerapp")
+}
+startActivity(intent)
+```
+
+**Implicit Intent with Chooser**
+```kotlin
+val intent = Intent(Intent.ACTION_SEND).apply {
+    type = "text/plain"
+    putExtra(Intent.EXTRA_TEXT, shareText)
+}
+
+val possibleActivities = packageManager.queryIntentActivities(
+    intent,
+    PackageManager.MATCH_ALL
+)
+
+if (possibleActivities.size > 1) {
+    startActivity(Intent.createChooser(intent, "Share with"))
+} else if (intent.resolveActivity(packageManager) != null) {
+    startActivity(intent)
 }
 ```
 
@@ -241,6 +262,8 @@ if (checkCallingPermission("com.example.PERMISSION")
 }
 
 // Clear calling identity for cross-process calls
+// Note: This is primarily needed for system services or privileged operations.
+// Most third-party apps don't need to manipulate calling identity.
 val identity = Binder.clearCallingIdentity()
 try {
     // Perform operation
@@ -263,20 +286,24 @@ try {
 ### JavaScript Interface
 
 **Use with Extreme Caution**
+It exposes native app methods to JavaScript in the WebView, allowing untrusted web content to invoke app functionality and potentially exploit sensitive operations if not properly restricted.
+
 ```kotlin
-// Only to JavaScript within your APK
+// Only expose a JavaScript interface when absolutely necessary
 webView.addJavascriptInterface(jsInterface, "Android")
 ```
 
 **Better Alternative (Android 6.0+)**
-If your app must use JavaScript interface support on devices running Android 6.0 (API level 23) and higher, use HTML message channels instead of communicating between a website and your app.
+If your app must use web-to-app messaging on devices running Android 6.0 (API level 23) and higher, use HTML message channels over addJavascriptInterface(). However, message channels are not trusted by default. Always validate the sender origin and treat all incoming messages as untrusted input.
 
 ```kotlin
 // Use HTML message channels for safer web-to-app communication
 val ports = webView.createWebMessageChannel()
 ports[0].setWebMessageCallback(object : WebMessagePort.WebMessageCallback() {
     override fun onMessage(port: WebMessagePort, message: WebMessage) {
-        // Handle messages from JavaScript securely
+        val data = message.data
+        if (!isTrustedMessage(data)) return
+        handleTrustedMessage(data)
     }
 })
 webView.postWebMessage(WebMessage("", arrayOf(ports[1])), Uri.parse("https://trusted-domain.com"))
@@ -309,7 +336,6 @@ webView.clearCache(true)
 
 **Android < 4.4 (API Level 19)**
 - Confirm WebView displays only trusted content
-- Use updatable security Provider for SSL protection
 
 ---
 

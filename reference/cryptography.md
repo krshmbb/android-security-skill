@@ -50,19 +50,26 @@ Use these algorithms for cryptographic operations:
 ## Common Cryptographic Operations
 
 ### Encrypt a Message
+Prefer authenticated encryption such as AES-GCM.
 
 ```kotlin
 val plaintext: ByteArray = ...
 val keygen = KeyGenerator.getInstance("AES")
 keygen.init(256)
 val key: SecretKey = keygen.generateKey()
-val cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING")
+
+val cipher = Cipher.getInstance("AES/GCM/NoPadding")
 cipher.init(Cipher.ENCRYPT_MODE, key)
+
 val ciphertext: ByteArray = cipher.doFinal(plaintext)
 val iv: ByteArray = cipher.iv
 ```
 
-**Important**: Store the IV with the ciphertext for decryption.
+**Important**
+- Store the IV with the ciphertext for decryption.
+- Do not reuse an IV with the same key
+- If the key must persist, store it securely, preferably in the Android Keystore
+- CBC and CTR modes do not provide integrity and are insecure on their own; if required for compatibility, they must be combined with authenticated integrity protection
 
 ### Generate a Message Digest
 
@@ -276,29 +283,10 @@ plugins {
 // Keys never committed to source control
 ```
 
-### Encryption for API Keys
-
-**Encrypt with Tink**
-```kotlin
-// Using Tink library for API key encryption
-val aead = AndroidKeysetManager.Builder()
-    .withSharedPref(context, "api_keys", "master_key")
-    .withKeyTemplate(KeyTemplates.get("AES256_GCM"))
-    .withMasterKeyUri("android-keystore://master_key")
-    .build()
-    .keysetHandle
-    .getPrimitive(Aead::class.java)
-
-// Encrypt API key
-val encrypted = aead.encrypt(
-    apiKey.toByteArray(),
-    null  // No additional data
-)
-
-// Decrypt when needed
-val decrypted = aead.decrypt(encrypted, null)
-val apiKey = String(decrypted)
-```
+- Keeps secrets out of source control
+- Does not keep secrets out of the shipped app
+- Anything packaged into the APK should be treated as recoverable by an attacker
+- Store real secrets on a backend you control and have the app call the backend instead
 
 ### Environment-Specific Keys
 

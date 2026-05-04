@@ -36,7 +36,8 @@ Guidelines for secure storage of sensitive data and logging in Android applicati
 
 **Important Warnings**
 - No security enforcement
-- Any app with `WRITE_EXTERNAL_STORAGE` permission can access (Android 10 or lower).
+- Any app with `WRITE_EXTERNAL_STORAGE` permission can access (Android 10 or lower)
+- Android 11+ enforces Scoped Storage, providing better isolation
 - Store only non-sensitive data (if you have to, encrypt sensitive data with encryption key anchored in keystore)
 - Perform input validation on all data read from external storage
 - Don't store executables or class files (If you do, ensure files are signed and cryptographically verified)
