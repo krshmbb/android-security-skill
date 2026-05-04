@@ -1,10 +1,10 @@
 # Android Security Skill
 
-A comprehensive Claude Code skill for Android application security based exclusively on official Android documentation from Android Open Source Project (AOSP) and Android Developers.
+A comprehensive security knowledge base for AI-assisted Android application development, based exclusively on official Android documentation from Android Open Source Project (AOSP) and Android Developers. Compatible with Claude Code, OpenAI Codex, Google Gemini, and other AI development tools.
 
 ## Overview
 
-This skill provides authoritative Android security best practices, code examples, and guidelines to help developers build secure Android applications.
+This skill provides authoritative Android security best practices, code examples, and guidelines to help developers build secure Android applications with AI assistance.
 
 ## Target Audience
 
@@ -48,6 +48,8 @@ android-security-skill/
 
 ## Quick Start
 
+### For Claude Code
+
 1. **Copy this skill directory** to one of these locations:
    - Personal: `~/.claude/skills/android-security/`
    - Project: `.claude/skills/android-security/`
@@ -59,6 +61,48 @@ android-security-skill/
    - "Review this code for security vulnerabilities"
 
 3. **Invoke directly** with `/android-security` followed by your question
+
+### For OpenAI (ChatGPT/Codex)
+
+1. **Upload reference files** as context:
+   - Use "Upload files" to add relevant reference documents from the `reference/` directory
+   - Or upload all reference files at once for comprehensive coverage
+
+2. **Provide system context** in your first message:
+   ```
+   You are an Android security expert. Use the uploaded Android security documentation
+   to provide accurate, secure coding guidance based on official Android best practices.
+   ```
+
+3. **Ask security questions** directly:
+   - "Based on the Android security docs, how should I store API keys?"
+   - "Review my authentication implementation for security issues"
+   - "What are the security best practices for Content Providers?"
+
+### For Google Gemini
+
+1. **Upload documentation** to your conversation:
+   - Click the attachment icon and upload relevant files from the `reference/` directory
+   - For comprehensive help, upload multiple reference files
+
+2. **Set the context** in your initial prompt:
+   ```
+   I'm developing an Android application. Use the uploaded Android security
+   documentation from AOSP and Android Developers to help me implement secure
+   features following official best practices.
+   ```
+
+3. **Query about Android security**:
+   - "According to the Android security guidelines, how should I handle sensitive data?"
+   - "Check my code for security vulnerabilities using the uploaded guidelines"
+   - "What's the secure way to implement WebView according to Android docs?"
+
+### General Usage Tips
+
+- Reference specific files for focused help: "Based on `data-storage.md`, how should I..."
+- Request code reviews: "Review this code against Android security best practices"
+- Ask for implementation guidance: "Help me implement [feature] securely"
+- Verify approaches: "Is this implementation secure according to Android guidelines?"
 
 ## Key Features
 
