@@ -46,6 +46,7 @@ Security guidelines for Services, BroadcastReceivers and Activities.
 - Do not rely on default export behavior
 
 ### Service Protection
+Protect exported services primarily with manifest permissions. Binder caller identity checks are appropriate inside Binder or AIDL method calls, but should not be relied on as the primary protection for started services.
 
 **Manifest Declaration**
 ```xml
@@ -65,10 +66,11 @@ Security guidelines for Services, BroadcastReceivers and Activities.
 
 ## BroadcastReceiver Security
 
-### Default Behavior
-- If intent filter declared in manifest, receiver is exported
-- Potentially accessible by any app
-- Apply security permissions within the manifest to prevent unauthorized apps from sending intents to the receiver
+### Export and Registration Rules
+- Always set `android:exported` explicitly for manifest-declared receivers
+- Use `android:exported="false"` unless the receiver must accept broadcasts from outside your app
+- Protect exported receivers with permissions when they trigger sensitive behavior
+- For context-registered receivers, explicitly choose whether they are exported
 
 ### Receiver Protection
 
@@ -228,6 +230,13 @@ class DeepLinkActivity : AppCompatActivity() {
 
 ### Task Hijacking Prevention
 
+**Recommended Practices**
+- Avoid exported activities with custom `taskAffinity` unless you have a specific need
+- Consider `android:taskAffinity=""` for especially sensitive activities
+- Use `FLAG_SECURE` when screenshots and non-secure displays should be blocked
+- Validate all incoming activity data, especially for deep links and exported entry points
+- Keep activities in separate tasks when handling sensitive data
+
 **Default vs Custom Affinity**
 ```xml
 <!-- Secure: Empty affinity prevents task hijacking -->
@@ -248,11 +257,6 @@ class DeepLinkActivity : AppCompatActivity() {
 - UI redressing attacks (phishing overlays)
 - Activity lifecycle manipulation
 
-**Prevention**
-- Use empty taskAffinity (`android:taskAffinity=""`) for sensitive activities
-- Keep activities in separate tasks when handling sensitive data
-- Avoid exported activities with custom task affinities
-
 **Security Flags**
 - `android:taskAffinity=""` - Prevents other apps from placing activities in your task
 - `android:excludeFromRecents="true"` - Hides sensitive activities from recent apps list
@@ -272,18 +276,6 @@ class SensitiveActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         )
-
-        // Verify task affinity
-        if (!isTaskSecure()) {
-            finish()
-            return
-        }
-    }
-
-    private fun isTaskSecure(): Boolean {
-        val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val tasks = activityManager.appTasks
-        return tasks.isNotEmpty() && tasks[0].taskInfo.numActivities == 1
     }
 }
 ```
@@ -297,6 +289,9 @@ class SensitiveActivity : AppCompatActivity() {
 **Isolated Processes**
 ```xml
 <!-- Run service in isolated process (no permissions) -->
+<!-- Note: This is an advanced feature primarily used for processing 
+     highly untrusted content (e.g., browser rendering, parsing 
+     complex file formats). Most third-party apps won't need this. -->
 <service
     android:name=".UntrustedContentService"
     android:isolatedProcess="true"
